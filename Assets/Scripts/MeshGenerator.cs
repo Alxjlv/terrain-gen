@@ -5,7 +5,7 @@ using UnityEngine;
 public static class MeshGenerator
 {
 
-    public static MeshData GenerateTerrainMesh(float[,] heightMap)
+    public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve heightCurve)
     {
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
@@ -21,7 +21,7 @@ public static class MeshGenerator
         {
             for (int x = 0; x < width; x++)
             {
-                meshData.vertices[vertexIndex] = new Vector3(topLeftX+x, heightMap[x,y], topLeftZ-y);
+                meshData.vertices[vertexIndex] = new Vector3(topLeftX+x, heightCurve.Evaluate(heightMap[x,y])* heightMultiplier, topLeftZ-y);
                 meshData.uvs[vertexIndex] = new Vector2(x / (float) width, y / (float) height);
 
                 // Ignoring the indices on the outside of the square for vertex creation

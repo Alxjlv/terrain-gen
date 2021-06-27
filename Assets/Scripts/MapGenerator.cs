@@ -24,6 +24,9 @@ public class MapGenerator : MonoBehaviour
     public int seed; // random number generator seed
     public Vector2 offset; // vector used for scrolling in the x and y of the map
 
+    public float meshHeightMultiplier; // adding peaks to map
+    public AnimationCurve meshHeightCurve; // Curving mesh height so water isn't affected by height multiplier
+    
     public bool autoUpdate;
 
     public TerrainType[] regions;
@@ -59,7 +62,7 @@ public class MapGenerator : MonoBehaviour
         }
         else if (drawMode == DrawMode.Mesh)
         {
-            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap), TextureGenerator.TextureFromColourMap(colourMap, mapWidth, mapHeight));
+            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, meshHeightMultiplier, meshHeightCurve), TextureGenerator.TextureFromColourMap(colourMap, mapWidth, mapHeight));
         }
     }
 
