@@ -7,8 +7,10 @@ public class EndlessTerrain : MonoBehaviour
 {
     public const float maxViewDist = 450;
     public Transform viewer;
+    public Material mapMaterial;
 
     public static Vector2 viewerPosition;
+    private static MapGenerator mapGenerator;
     private int chunkSize;
     private int chunksVisibleInViewDist; // number of terrain chunks visible around the viewer
 
@@ -17,6 +19,7 @@ public class EndlessTerrain : MonoBehaviour
 
     private void Start()
     {
+        mapGenerator = FindObjectOfType<MapGenerator>();
         chunkSize = MapGenerator.mapChunkSize - 1;
         chunksVisibleInViewDist = Mathf.RoundToInt(maxViewDist / chunkSize);
     }
@@ -55,7 +58,7 @@ public class EndlessTerrain : MonoBehaviour
                     }
                 }else 
                 {
-                    terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord,chunkSize, transform));
+                    terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord,chunkSize, transform, mapMaterial));
                 }
             }
         }
@@ -66,7 +69,12 @@ public class EndlessTerrain : MonoBehaviour
         private GameObject meshObject;
         private Vector2 position;
         private Bounds bounds; // struct for bounds
-        public TerrainChunk(Vector2 coord, int size, Transform parent)
+
+        private MapData mapData;
+
+        private MeshRenderer meshRenderer;
+        private MeshFilter meshFilter;
+        public TerrainChunk(Vector2 coord, int size, Transform parent, Material material)
         {
             position = coord * size;
             
@@ -74,15 +82,34 @@ public class EndlessTerrain : MonoBehaviour
             bounds = new Bounds(position, Vector2.one * size);
             
             Vector3 positionV3 = new Vector3(position.x, 0, position.y);
+
+            // Pretty cool how you can make a gameobject and add its parent huh
+            meshObject = new GameObject("Terrain Chunk");
             
-            meshObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            // Curious how AddComponent is tagged by rider as expensive
+            // AddComponent returns the component it adds
+            meshRenderer = meshObject.AddComponent<MeshRenderer>();
+            meshFilter = meshObject.AddComponent<MeshFilter>();
+
+            meshRenderer.material = material;
+            
             meshObject.transform.position = positionV3;
-            meshObject.transform.localScale = Vector3.one * size / 10f; // primitive plane is default size 10
             meshObject.transform.parent = parent;
             
             SetVisible(false);
+            mapGenerator.RequestMapData(OnMapDataRecieved);
         }
 
+        void OnMapDataRecieved(MapData mapData)
+        {
+            mapGenerator.RequestMeshData(mapData, OnMeshDataRecieved);
+        }
+
+        void OnMeshDataRecieved(MeshData meshData)
+        {
+            meshFilter.mesh = meshData.CreateMesh();
+        }
+        
         // Find position on the perimeter closest to the viewer & checks if it needs to be rendered
         public void UpdateTerrainChunk()
         {
